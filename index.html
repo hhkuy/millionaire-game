@@ -2,38 +2,53 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8" />
-  <title>لعبة من سيربح المليون</title>
+  <title>لعبة من سيربح المليار - الدينار العراقي</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
+  <!-- شاشة البداية -->
+  <div id="start-screen" class="screen active">
+    <h1>لعبة من سيربح المليار</h1>
+    <p>اختبر معلوماتك واربح حتى مليار دينار عراقي!</p>
+    <button id="start-btn" class="main-btn">ابدأ الآن</button>
+    <button id="show-questions-btn" class="secondary-btn">عرض جميع الأسئلة</button>
+  </div>
+
+  <!-- شاشة عرض جميع الأسئلة (قائمة الأسئلة) -->
+  <div id="questions-screen" class="screen">
+    <h2>جميع الأسئلة المتوفرة</h2>
+    <ul id="all-questions-list"></ul>
+    <button id="back-to-start" class="secondary-btn">عودة للقائمة الرئيسية</button>
+  </div>
+
+  <!-- شاشة اللعبة -->
+  <div id="game-screen" class="screen">
     <header>
-      <h1>لعبة من سيربح المليون</h1>
+      <h1>من سيربح المليار</h1>
+      <div class="info-bar">
+        <span>المستوى: <span id="level">1</span></span>
+        <span>الجائزة الحالية: <span id="prize">0</span> دينار</span>
+      </div>
     </header>
-    
-    <div id="game-area">
-      <div id="question-number"></div>
-      <div id="question"></div>
-      <div id="options">
-        <!-- سيتم إضافة الخيارات هنا بواسطة JavaScript -->
-      </div>
-      <div id="lifelines">
-        <button id="fifty-fifty">50:50</button>
-        <button id="phone-friend">اتصال بصديق</button>
-        <button id="ask-audience">استشارة الجمهور</button>
-      </div>
+
+    <div class="question-container">
+      <h2 id="question-number"></h2>
+      <div id="question" class="question-text"></div>
+      <div id="options" class="options-container"></div>
     </div>
-    
-    <div id="progress">
-      <p>المستوى: <span id="level">1</span> | الجائزة الحالية: <span id="prize">0</span> ريال</p>
+
+    <div class="lifelines">
+      <button id="fifty-fifty" class="lifeline-btn">50:50</button>
+      <button id="phone-friend" class="lifeline-btn">اتصال بصديق</button>
+      <button id="ask-audience" class="lifeline-btn">استشارة الجمهور</button>
     </div>
-    
-    <div id="result" class="hidden">
+
+    <div id="result" class="hidden result-container">
       <h2 id="result-message"></h2>
-      <button id="restart-button">ابدأ من جديد</button>
+      <button id="restart-button" class="main-btn">إعادة اللعب</button>
     </div>
   </div>
-  
+
   <script src="script.js"></script>
 </body>
 </html>
