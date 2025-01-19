@@ -1,14 +1,13 @@
 /******************************************
- * متغيرات اللعبة والإعدادات الأساسية
+ * الإعدادات والمتغيرات العالمية
  ******************************************/
-let questions = [];                // سنخزن فيه بيانات الأسئلة من ملف JSON
-let currentQuestionIndex = 0;      // مؤشر السؤال الحالي
-let usedQuestionsIndices = [];     // لتتبع الأسئلة التي استُخدمت منعاً للتكرار
-let currentPrize = 0;             // الجائزة الحالية
-let currentLevel = 1;             // مستوى السؤال الحالي
+let questions = [];
+let currentQuestionIndex = 0;      // يستخدم لحفظ فهرس السؤال الحالي عشوائيًا
+let usedQuestionsIndices = [];     // الأسئلة المستعملة (كي لا تتكرر)
+let currentPrize = 0;
+let currentLevel = 1;
 
-// قائمة الجوائز لـ 15 مستوى (1 -> 15) بالدينار العراقي
-// مع افتراض أن السؤال الـ 15 قيمته مليار دينار عراقي
+// 15 مستوى، المستوى الأخير = مليار دينار عراقي
 const levelsPrizes = [
   1000,
   2000,
@@ -24,18 +23,18 @@ const levelsPrizes = [
   1250000,
   2500000,
   5000000,
-  1000000000 // مستوى 15
+  1000000000 // مستوى 16 (يمكن تعديله حسب رغبتك)
 ];
 
 /******************************************
- * عناصر HTML رئيسية
+ * عناصر HTML
  ******************************************/
 // شاشات
 const startScreen = document.getElementById('start-screen');
 const gameScreen = document.getElementById('game-screen');
 const questionsScreen = document.getElementById('questions-screen');
 
-// أزرار الشاشة الرئيسية
+// أزرار وحقول بالشاشة الرئيسية
 const startBtn = document.getElementById('start-btn');
 const showQuestionsBtn = document.getElementById('show-questions-btn');
 const backToStartBtn = document.getElementById('back-to-start');
@@ -55,40 +54,39 @@ const fiftyFiftyBtn = document.getElementById('fifty-fifty');
 const phoneFriendBtn = document.getElementById('phone-friend');
 const askAudienceBtn = document.getElementById('ask-audience');
 
-// قائمة عرض جميع الأسئلة
+// عرض جميع الأسئلة
 const allQuestionsList = document.getElementById('all-questions-list');
 
+
 /******************************************
- * جلب الأسئلة من ملف JSON
+ * جلب الأسئلة من ملف questions.json
  ******************************************/
 fetch('questions.json')
   .then(response => response.json())
   .then(data => {
     questions = data;
-    populateAllQuestionsList(); // تعبئة قائمة كل الأسئلة في شاشة خاصة
+    populateAllQuestionsList();
   })
   .catch(error => console.error("خطأ في جلب الأسئلة:", error));
 
 
 /******************************************
- * دوال تحكم في الشاشات
+ * دوال التنقل بين الشاشات
  ******************************************/
 function showScreen(screenElement) {
-  // إخفاء جميع الشاشات
   startScreen.classList.remove('active');
   gameScreen.classList.remove('active');
   questionsScreen.classList.remove('active');
-
-  // عرض الشاشة المطلوبة
+  
   screenElement.classList.add('active');
 }
 
 /******************************************
- * دالة تعبئة شاشة "عرض جميع الأسئلة"
+ * تعبئة شاشة عرض جميع الأسئلة
  ******************************************/
 function populateAllQuestionsList() {
   allQuestionsList.innerHTML = "";
-  questions.forEach((q, index) => {
+  questions.forEach((q) => {
     const li = document.createElement('li');
     li.textContent = q.question;
     allQuestionsList.appendChild(li);
@@ -99,17 +97,17 @@ function populateAllQuestionsList() {
  * بدء اللعبة
  ******************************************/
 function startGame() {
-  // تهيئة المتغيرات
+  // تهيئة القيم الافتراضية
   currentQuestionIndex = 0;
   currentLevel = 1;
   currentPrize = 0;
   usedQuestionsIndices = [];
   resultEl.classList.add('hidden');
-  
-  // تمكين وسائل المساعدة مرة أخرى (إن كانت معطلة)
+
+  // إعادة تفعيل وسائل المساعدة
   enableLifelines();
 
-  // عرض شاشة اللعبة
+  // التوجه لشاشة اللعبة
   showScreen(gameScreen);
 
   // عرض السؤال الأول
@@ -117,17 +115,16 @@ function startGame() {
 }
 
 /******************************************
- * عرض سؤال جديد
- * - يتم اختيار سؤال عشوائي غير مكرر
+ * اختيار سؤال عشوائي غير مكرر وعرضه
  ******************************************/
-function showQuestion() {
-  // تحقق من انتهاء اللعبة (إذا وصلنا 15 سؤالًا أو انتهت الأسئلة)
+async function showQuestion() {
+  // تحقق إذا وصلنا لمستوى أكبر من 15 (أو 16 في حالتك) أو استنفدنا الأسئلة
   if (currentLevel > 15 || usedQuestionsIndices.length === questions.length) {
-    endGame(`تهانينا! ربحت ${currentPrize.toLocaleString()} دينار!`);
+    endGame(`تهانينا! ربحت ${formatPrize(currentPrize)} دينار!`);
     return;
   }
 
-  // اختيار سؤال عشوائي غير مكرر
+  // اختر سؤالاً عشوائياً
   let randomIndex;
   do {
     randomIndex = Math.floor(Math.random() * questions.length);
@@ -136,25 +133,82 @@ function showQuestion() {
   usedQuestionsIndices.push(randomIndex);
   currentQuestionIndex = randomIndex;
 
-  // تحديث عناصر الصفحة
+  // حدّد عناصر السؤال
   const currentQuestion = questions[randomIndex];
   questionNumberEl.textContent = `سؤال المستوى ${currentLevel}`;
   questionEl.textContent = currentQuestion.question;
-
+  
   // تفريغ الأزرار القديمة
   optionsEl.innerHTML = "";
 
-  // إنشاء أزرار الإجابات
-  currentQuestion.options.forEach((optionText, index) => {
+  // في البداية، إنشاء الأزرار بحالة مخفية (option-hidden)
+  currentQuestion.options.forEach((optionText, i) => {
     const btn = document.createElement('button');
+    btn.classList.add('option-hidden');
     btn.textContent = optionText;
-    btn.addEventListener('click', () => checkAnswer(index));
+    btn.onclick = () => checkAnswer(i);
     optionsEl.appendChild(btn);
   });
 
-  // تحديث المستوى والجائزة
+  // حدّث معلومات المستوى والجائزة
   levelEl.textContent = currentLevel;
-  prizeEl.textContent = currentPrize.toLocaleString();
+  prizeEl.textContent = formatPrize(currentPrize);
+
+  // الآن، نستخدم ميزة القراءة الصوتية + إظهار الخيارات بالتتابع
+  await readQuestionAndOptions(currentQuestion);
+}
+
+/******************************************
+ * دالة لتنسيق الأرقام (فواصل للألوف)
+ ******************************************/
+function formatPrize(value) {
+  return value.toLocaleString('en-US');
+}
+
+/******************************************
+ * قراءة نص باللغة العربية باستخدام Web Speech API
+ * تعيد Promise للتسلسل المنطقي
+ ******************************************/
+function readTextAr(text) {
+  return new Promise((resolve, reject) => {
+    if (!('speechSynthesis' in window)) {
+      console.warn("متصفحك لا يدعم ميزة speechSynthesis!");
+      resolve();
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ar-SA'; // أو ar أو أي لهجة أخرى مدعومة
+    utterance.onend = () => {
+      resolve(); // ينتهي النطق
+    };
+    speechSynthesis.speak(utterance);
+  });
+}
+
+/******************************************
+ * قراءة السؤال والخيارات بالتسلسل + إظهارها
+ ******************************************/
+async function readQuestionAndOptions(questionObj) {
+  // اقرأ السؤال أولًا
+  await readTextAr(questionObj.question);
+
+  // ثم أظهر واقرأ كل خيار بالتتابع
+  const optionButtons = optionsEl.querySelectorAll('button');
+  for (let i = 0; i < optionButtons.length; i++) {
+    // أظهر الزر (بشكل مرئي تدريجي)
+    const btn = optionButtons[i];
+    btn.classList.remove('option-hidden');
+    btn.classList.add('option-visible');
+
+    // انتظر قليلًا قبل البدء بقراءته (إعطاء انطباع الظهور)
+    await new Promise(res => setTimeout(res, 300));
+
+    // اقرأ نص الخيار
+    await readTextAr(btn.textContent);
+
+    // فاصلة زمنية بين ظهور/قراءة كل خيار
+    await new Promise(res => setTimeout(res, 200));
+  }
 }
 
 /******************************************
@@ -166,12 +220,12 @@ function checkAnswer(selectedIndex) {
 
   if (selectedIndex === correctIndex) {
     // إجابة صحيحة
-    currentPrize = levelsPrizes[currentLevel - 1]; // لأن المستوى يبدأ من 1
+    currentPrize = levelsPrizes[currentLevel - 1]; 
     currentLevel++;
     showQuestion();
   } else {
     // إجابة خاطئة
-    endGame(`للأسف، إجابة خاطئة. ربحت ${currentPrize.toLocaleString()} دينار.`);
+    endGame(`للأسف، إجابة خاطئة. ربحت ${formatPrize(currentPrize)} دينار.`);
   }
 }
 
@@ -194,10 +248,9 @@ restartButton.addEventListener('click', () => {
 });
 
 /******************************************
- * وسائل المساعدة
+ * تفعيل/تعطيل وسائل المساعدة
  ******************************************/
 function enableLifelines() {
-  // إعادة تمكين الأزرار
   [fiftyFiftyBtn, phoneFriendBtn, askAudienceBtn].forEach(btn => {
     btn.disabled = false;
     btn.style.visibility = 'visible';
@@ -210,7 +263,6 @@ fiftyFiftyBtn.addEventListener('click', () => {
   const correctIndex = currentQuestion.correctAnswerIndex;
   const buttons = optionsEl.querySelectorAll('button');
 
-  // إخفاء خيارين عشوائيين غير صحيحين
   let hiddenCount = 0;
   for (let i = 0; i < buttons.length; i++) {
     if (i !== correctIndex && hiddenCount < 2) {
@@ -240,9 +292,11 @@ askAudienceBtn.addEventListener('click', () => {
 });
 
 /******************************************
- * أحداث أزرار التنقل بين الشاشات
+ * أزرار التنقل (الشاشة الرئيسية)
  ******************************************/
 startBtn.addEventListener('click', () => {
+  // بعض المتصفحات تمنع التشغيل الصوتي إلا بعد تفاعل المستخدم
+  // هذا الحدث (click) يوفر التفاعل المطلوب، فيسمح ببدء القراءة الصوتية
   startGame();
 });
 
