@@ -1,10 +1,46 @@
-let questions = [];
-let currentQuestionIndex = 0;
-let currentPrize = 0;
-let currentLevel = 1;
-const levelsPrizes = [100, 200, 300, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 125000, 250000, 500000, 1000000];
+/******************************************
+ * متغيرات اللعبة والإعدادات الأساسية
+ ******************************************/
+let questions = [];                // سنخزن فيه بيانات الأسئلة من ملف JSON
+let currentQuestionIndex = 0;      // مؤشر السؤال الحالي
+let usedQuestionsIndices = [];     // لتتبع الأسئلة التي استُخدمت منعاً للتكرار
+let currentPrize = 0;             // الجائزة الحالية
+let currentLevel = 1;             // مستوى السؤال الحالي
 
-// عناصر HTML
+// قائمة الجوائز لـ 15 مستوى (1 -> 15) بالدينار العراقي
+// مع افتراض أن السؤال الـ 15 قيمته مليار دينار عراقي
+const levelsPrizes = [
+  1000,
+  2000,
+  3000,
+  5000,
+  10000,
+  20000,
+  40000,
+  80000,
+  160000,
+  320000,
+  640000,
+  1250000,
+  2500000,
+  5000000,
+  1000000000 // مستوى 15
+];
+
+/******************************************
+ * عناصر HTML رئيسية
+ ******************************************/
+// شاشات
+const startScreen = document.getElementById('start-screen');
+const gameScreen = document.getElementById('game-screen');
+const questionsScreen = document.getElementById('questions-screen');
+
+// أزرار الشاشة الرئيسية
+const startBtn = document.getElementById('start-btn');
+const showQuestionsBtn = document.getElementById('show-questions-btn');
+const backToStartBtn = document.getElementById('back-to-start');
+
+// عناصر اللعبة
 const questionNumberEl = document.getElementById('question-number');
 const questionEl = document.getElementById('question');
 const optionsEl = document.getElementById('options');
@@ -14,76 +50,134 @@ const resultEl = document.getElementById('result');
 const resultMessageEl = document.getElementById('result-message');
 const restartButton = document.getElementById('restart-button');
 
+// وسائل المساعدة
 const fiftyFiftyBtn = document.getElementById('fifty-fifty');
 const phoneFriendBtn = document.getElementById('phone-friend');
 const askAudienceBtn = document.getElementById('ask-audience');
 
-// جلب الأسئلة من الملف questions.json
+// قائمة عرض جميع الأسئلة
+const allQuestionsList = document.getElementById('all-questions-list');
+
+/******************************************
+ * جلب الأسئلة من ملف JSON
+ ******************************************/
 fetch('questions.json')
   .then(response => response.json())
   .then(data => {
     questions = data;
-    // بدء اللعبة بعد جلب الأسئلة
-    startGame();
+    populateAllQuestionsList(); // تعبئة قائمة كل الأسئلة في شاشة خاصة
   })
-  .catch(error => {
-    console.error("خطأ في جلب الأسئلة:", error);
-  });
+  .catch(error => console.error("خطأ في جلب الأسئلة:", error));
 
+
+/******************************************
+ * دوال تحكم في الشاشات
+ ******************************************/
+function showScreen(screenElement) {
+  // إخفاء جميع الشاشات
+  startScreen.classList.remove('active');
+  gameScreen.classList.remove('active');
+  questionsScreen.classList.remove('active');
+
+  // عرض الشاشة المطلوبة
+  screenElement.classList.add('active');
+}
+
+/******************************************
+ * دالة تعبئة شاشة "عرض جميع الأسئلة"
+ ******************************************/
+function populateAllQuestionsList() {
+  allQuestionsList.innerHTML = "";
+  questions.forEach((q, index) => {
+    const li = document.createElement('li');
+    li.textContent = q.question;
+    allQuestionsList.appendChild(li);
+  });
+}
+
+/******************************************
+ * بدء اللعبة
+ ******************************************/
 function startGame() {
+  // تهيئة المتغيرات
   currentQuestionIndex = 0;
-  currentPrize = 0;
   currentLevel = 1;
+  currentPrize = 0;
+  usedQuestionsIndices = [];
   resultEl.classList.add('hidden');
+  
+  // تمكين وسائل المساعدة مرة أخرى (إن كانت معطلة)
+  enableLifelines();
+
+  // عرض شاشة اللعبة
+  showScreen(gameScreen);
+
+  // عرض السؤال الأول
   showQuestion();
 }
 
-// عرض السؤال الحالي
+/******************************************
+ * عرض سؤال جديد
+ * - يتم اختيار سؤال عشوائي غير مكرر
+ ******************************************/
 function showQuestion() {
-  if (currentQuestionIndex >= questions.length) {
-    // لا توجد أسئلة أخرى، اللاعب فاز أو أنتهت الأسئلة
-    endGame("تهانينا! ربحت " + currentPrize + " ريال!");
+  // تحقق من انتهاء اللعبة (إذا وصلنا 15 سؤالًا أو انتهت الأسئلة)
+  if (currentLevel > 15 || usedQuestionsIndices.length === questions.length) {
+    endGame(`تهانينا! ربحت ${currentPrize.toLocaleString()} دينار!`);
     return;
   }
-  
-  let currentQuestion = questions[currentQuestionIndex];
-  
-  questionNumberEl.textContent = "سؤال رقم: " + (currentQuestionIndex + 1);
+
+  // اختيار سؤال عشوائي غير مكرر
+  let randomIndex;
+  do {
+    randomIndex = Math.floor(Math.random() * questions.length);
+  } while (usedQuestionsIndices.includes(randomIndex));
+
+  usedQuestionsIndices.push(randomIndex);
+  currentQuestionIndex = randomIndex;
+
+  // تحديث عناصر الصفحة
+  const currentQuestion = questions[randomIndex];
+  questionNumberEl.textContent = `سؤال المستوى ${currentLevel}`;
   questionEl.textContent = currentQuestion.question;
-  
-  // تفريغ الخيارات القديمة
+
+  // تفريغ الأزرار القديمة
   optionsEl.innerHTML = "";
-  
-  // إنشاء أزرار الخيارات
+
+  // إنشاء أزرار الإجابات
   currentQuestion.options.forEach((optionText, index) => {
     const btn = document.createElement('button');
     btn.textContent = optionText;
     btn.addEventListener('click', () => checkAnswer(index));
     optionsEl.appendChild(btn);
   });
-  
-  // عرض المستوى والجائزة الحالية
+
+  // تحديث المستوى والجائزة
   levelEl.textContent = currentLevel;
-  prizeEl.textContent = currentPrize;
+  prizeEl.textContent = currentPrize.toLocaleString();
 }
 
-// التحقق من الإجابة
+/******************************************
+ * التحقق من الإجابة
+ ******************************************/
 function checkAnswer(selectedIndex) {
-  const correctIndex = questions[currentQuestionIndex].correctAnswerIndex;
-  
+  const currentQuestion = questions[currentQuestionIndex];
+  const correctIndex = currentQuestion.correctAnswerIndex;
+
   if (selectedIndex === correctIndex) {
     // إجابة صحيحة
-    currentPrize = levelsPrizes[currentQuestionIndex];
+    currentPrize = levelsPrizes[currentLevel - 1]; // لأن المستوى يبدأ من 1
     currentLevel++;
-    currentQuestionIndex++;
     showQuestion();
   } else {
     // إجابة خاطئة
-    endGame("للأسف، إجابة خاطئة. ربحت " + currentPrize + " ريال.");
+    endGame(`للأسف، إجابة خاطئة. ربحت ${currentPrize.toLocaleString()} دينار.`);
   }
 }
 
-// إنهاء اللعبة
+/******************************************
+ * إنهاء اللعبة
+ ******************************************/
 function endGame(message) {
   resultEl.classList.remove('hidden');
   resultMessageEl.textContent = message;
@@ -92,18 +186,31 @@ function endGame(message) {
   optionsEl.innerHTML = "";
 }
 
-// إعادة البدء
+/******************************************
+ * إعادة البدء
+ ******************************************/
 restartButton.addEventListener('click', () => {
   startGame();
 });
 
-// تعامل مع وسائل المساعدة (50:50)
+/******************************************
+ * وسائل المساعدة
+ ******************************************/
+function enableLifelines() {
+  // إعادة تمكين الأزرار
+  [fiftyFiftyBtn, phoneFriendBtn, askAudienceBtn].forEach(btn => {
+    btn.disabled = false;
+    btn.style.visibility = 'visible';
+  });
+}
+
+// 50:50
 fiftyFiftyBtn.addEventListener('click', () => {
-  // مثال بسيط: إخفاء خيارين عشوائيين غير صحيحين
   const currentQuestion = questions[currentQuestionIndex];
   const correctIndex = currentQuestion.correctAnswerIndex;
   const buttons = optionsEl.querySelectorAll('button');
-  
+
+  // إخفاء خيارين عشوائيين غير صحيحين
   let hiddenCount = 0;
   for (let i = 0; i < buttons.length; i++) {
     if (i !== correctIndex && hiddenCount < 2) {
@@ -111,18 +218,38 @@ fiftyFiftyBtn.addEventListener('click', () => {
       hiddenCount++;
     }
   }
-  // تعطيل الزر بعد الاستخدام
   fiftyFiftyBtn.disabled = true;
 });
 
-// تعامل مع اتصال بصديق
+// اتصال بصديق
 phoneFriendBtn.addEventListener('click', () => {
-  alert("تواصلت مع صديقك ويعتقد أن الإجابة هي: " + questions[currentQuestionIndex].options[questions[currentQuestionIndex].correctAnswerIndex]);
+  const currentQuestion = questions[currentQuestionIndex];
+  const correctIndex = currentQuestion.correctAnswerIndex;
+  const correctOption = currentQuestion.options[correctIndex];
+  alert(`صديقك يعتقد أن الإجابة الصحيحة هي: "${correctOption}"`);
   phoneFriendBtn.disabled = true;
 });
 
-// تعامل مع استشارة الجمهور
+// استشارة الجمهور
 askAudienceBtn.addEventListener('click', () => {
-  alert("صوت الجمهور يتجه نحو الخيار: " + questions[currentQuestionIndex].options[questions[currentQuestionIndex].correctAnswerIndex]);
+  const currentQuestion = questions[currentQuestionIndex];
+  const correctIndex = currentQuestion.correctAnswerIndex;
+  const correctOption = currentQuestion.options[correctIndex];
+  alert(`الجمهور يصوت بنسبة عالية للخيار: "${correctOption}"`);
   askAudienceBtn.disabled = true;
+});
+
+/******************************************
+ * أحداث أزرار التنقل بين الشاشات
+ ******************************************/
+startBtn.addEventListener('click', () => {
+  startGame();
+});
+
+showQuestionsBtn.addEventListener('click', () => {
+  showScreen(questionsScreen);
+});
+
+backToStartBtn.addEventListener('click', () => {
+  showScreen(startScreen);
 });
