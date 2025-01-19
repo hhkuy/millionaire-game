@@ -1,90 +1,158 @@
-body {
+/* Reset بسيط */
+* {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: sans-serif;
-  background: #f0f0f0;
-  text-align: center;
-  direction: rtl; /* يجعل الاتجاه من اليمين إلى اليسار */
 }
 
-.container {
-  width: 80%;
+body {
+  font-family: "Tahoma", Arial, sans-serif;
+  background: linear-gradient(to bottom right, #060f4f, #202a72);
+  color: #fff;
+  text-align: center;
+  direction: rtl; /* مهم لعرض المحتوى بالعربية */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* شاشات */
+.screen {
+  display: none; /* الإخفاء الافتراضي */
   margin: auto;
   max-width: 600px;
-  padding: 20px;
-  background: #ffffff;
-  margin-top: 50px;
+  width: 90%;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
   border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  box-shadow: 0 0 15px rgba(0,0,0,.3);
 }
 
-header {
-  margin-bottom: 20px;
+.screen.active {
+  display: block; /* الشاشة النشطة */
 }
 
+/* عناوين */
 h1 {
-  margin: 0;
+  margin-bottom: 20px;
+  font-size: 2rem;
+}
+
+h2 {
+  margin-bottom: 15px;
+  font-size: 1.4rem;
+}
+
+/* الأزرار */
+button {
+  cursor: pointer;
+  padding: 10px 20px;
+  margin: 10px 5px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  transition: background 0.3s;
+}
+
+/* أزرار عامة */
+.main-btn {
+  background: #ffc107; /* ذهبي */
   color: #333;
 }
 
-#question {
+.main-btn:hover {
+  background: #e6ad06;
+}
+
+.secondary-btn {
+  background: #17a2b8; /* سماوي */
+  color: #fff;
+}
+
+.secondary-btn:hover {
+  background: #138496;
+}
+
+/* معلومات اللعبة */
+.info-bar {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+  font-size: 1rem;
+}
+
+/* صندوق السؤال */
+.question-container {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+#question-number {
+  margin-bottom: 10px;
+}
+
+.question-text {
   font-size: 1.2rem;
   margin-bottom: 20px;
   min-height: 60px;
 }
 
-#options button {
-  display: block;
-  width: 100%;
-  margin: 5px auto;
-  padding: 10px;
-  font-size: 1rem;
-  border: none;
-  background: #007bff;
-  color: #fff;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.3s;
+/* الخيارات */
+.options-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
-#options button:hover {
+.options-container button {
+  background: #007bff;
+  color: #fff;
+}
+
+.options-container button:hover {
   background: #0056b3;
 }
 
-#lifelines {
-  margin: 20px 0;
+/* وسائل المساعدة */
+.lifelines {
+  margin-bottom: 20px;
 }
 
-#lifelines button {
-  margin: 0 5px;
-  background: #ffc107;
-  color: #333;
-  font-size: 0.9rem;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-#result.hidden {
-  display: none;
-}
-
-#restart-button {
-  margin-top: 20px;
-  padding: 10px 20px;
-  background: #28a745;
+.lifeline-btn {
+  background: #28a745; /* أخضر */
   color: #fff;
-  font-size: 1rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+  margin: 0 5px;
+  font-size: 0.9rem;
 }
 
-#restart-button:hover {
+.lifeline-btn:hover {
   background: #218838;
 }
 
-#progress {
+/* قسم النتيجة */
+.result-container {
   margin-top: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.hidden {
+  display: none;
+}
+
+/* قائمة عرض الأسئلة */
+#all-questions-list {
+  list-style: inside decimal;
+  text-align: right;
+  margin-top: 15px;
+}
+
+#all-questions-list li {
+  margin-bottom: 10px;
+  line-height: 1.6;
 }
